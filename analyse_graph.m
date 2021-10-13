@@ -1,14 +1,12 @@
+%% detect and analyse the population spike 
 function result = analyse(in_matrix, spikeABC_mV, spikeAB_mV, spike_begin, spike_end)
-%%
-%preallocate a matrix for the following values: peak B, peak A,
+%% preallocate a matrix for the following values: peak B, peak A,
 %peak C, spikeABC, spike AB, TIME of peak B
 
 result = -100*ones((size(in_matrix,2)-1),7);
 
 
-%%
-%ohranicenie intervalu, v ktorom sa nachadza spike
-%the interval which is to the right of the spike
+%% define the interval which is to the right of the spike
 
 ROWspBEG = 1;
 while in_matrix(ROWspBEG,1) < spike_begin
@@ -20,19 +18,17 @@ while in_matrix(ROWspEND,1 )< spike_end
     ROWspEND = ROWspEND+1;
 end
 
-%%
-%analyse the spike
+%% analyse the spike
 
 for sweep = 2:size(in_matrix,2)
    
-%hlada peak B
 %find peak B
-    %peak B porovnava s s tromi hodnotami vlavo a styroma vpravo, dve vedlajsie hodnoty mozu byt>= peakB
+    %peak B is compared with 3 values to the left and 4 values to the right, 2 adjacent values can be >= peakB
     for rowB = ROWspBEG+3:(ROWspEND-4)    
         if ((in_matrix(rowB,sweep) <= in_matrix(rowB-1,sweep)) && (in_matrix(rowB,sweep) <= in_matrix(rowB-2,sweep)) && (in_matrix(rowB,sweep) < in_matrix(rowB-3,sweep))) && ((in_matrix(rowB,sweep)<= in_matrix(rowB+1,sweep)) && (in_matrix(rowB,sweep) <= in_matrix(rowB+2,sweep)) && (in_matrix(rowB,sweep) < in_matrix(rowB+3,sweep)) && (in_matrix(rowB,sweep)<in_matrix(rowB+4,sweep)))
             peakB = in_matrix(rowB,sweep);
             timeB = in_matrix(rowB,1);
-    %ak najde cosi, co mu pripomina peakB, tak hlada peakA a peakC
+            
     %after finding peak B, search for peak A and peak C
             peakA = in_matrix(ROWspBEG,sweep);
             for rowA = ROWspBEG:(rowB-1)                
@@ -43,13 +39,15 @@ for sweep = 2:size(in_matrix,2)
             end
             peakC = in_matrix(rowB+1,sweep);
             for rowC = (rowB + 1):ROWspEND                
-                if in_matrix(rowC,sweep)>peakC
+                if in_matrix(rowC,sweep) > peakC
                     peakC = in_matrix(rowC,sweep);
                     timeC = in_matrix(rowC,1);
                 end
             end
-%Vypocita velkost spikeABC a spike AB a ak je vacsia ako dana hodnota spikeABC_mV a spike AB, tak ho
-%povazuje za spike a hladanie ukoncuje, ak najdeny spike podmienky nesplna, hlada dalej.
+    %calculate the value of spikeABC and if it is greater than the given values
+    %for spikeABC_mV and spikeAB_mV, it is considered a spike and the search
+    %is finished; if the spikeABC value does not fulfill the conditions, the
+    %the search continues
             spikeABC = (peakA/2 + peakC/2) - peakB;
             spikeAB = peakA - peakB;
             if (spikeABC >= spikeABC_mV) && (spikeAB >= spikeAB_mV)
@@ -68,5 +66,3 @@ for sweep = 2:size(in_matrix,2)
 
     end
 end
-%base = mean(result(1:5,6));
-%result(:,7) = 100*result(:,6)/base;
